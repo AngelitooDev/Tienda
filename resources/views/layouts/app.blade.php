@@ -13,6 +13,9 @@
         <a class="navbar-brand fw-bold" href="{{ route('products.index') }}">Productos</a>
 
     </div>
+    <div class="container">
+        <a class="navbar-brand" href="{{ route('trackings.index') }}">Comparador de Precios</a>
+    </div>
 </nav>
 
 <div class="container mt-4">

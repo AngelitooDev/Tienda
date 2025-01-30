@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProductControllerApi;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\PriceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,3 +34,11 @@ Route::post('/productos', [ProductViewController::class, 'store'])->name('produc
 Route::get('/productos/{product}/editar', [ProductViewController::class, 'edit'])->name('products.edit');
 Route::put('/productos/{product}', [ProductViewController::class, 'update'])->name('products.update');
 Route::delete('/productos/{product}', [ProductViewController::class, 'destroy'])->name('products.destroy');
+
+
+
+Route::resource('trackings', TrackingController::class);
+Route::post('trackings/{tracking}/prices', [PriceController::class, 'store'])->name('trackings.prices.store');
+
+
+Route::post('trackings/{tracking}/prices', [PriceController::class, 'store'])->name('prices.store');

@@ -1,118 +1,162 @@
-README - API y Web para Gestión de Productos
+Proyecto de Scrapeo de Precios y Seguimiento de URLs
 
-=======================================
-CONTROLADOR: ProductControllerApi
-=======================================
+Este proyecto permite a los usuarios registrar URLs de productos, extraer y almacenar el precio de estos productos utilizando web scraping. El sistema esta basado en Laravel e incluye los siguientes componentes principales:
 
-Este controlador expone una API REST para gestionar productos. A continuación, se explican los endpoints y cómo usarlos en Postman:
+Modelos
 
-1. **Listar todos los productos (GET)**
-    - URL: `http://localhost/api/productos`
-    - Método: GET
-    - Respuesta: Devuelve una lista de todos los productos en formato JSON.
-    - Código de respuesta: 200
+1. Modelo Tracking
 
-2. **Mostrar un producto específico (GET)**
-    - URL: `http://localhost/api/productos/{id}`
-    - Método: GET
-    - Parámetros:
-        - `{id}`: ID del producto a consultar.
-    - Respuesta: Devuelve el producto solicitado en formato JSON.
-    - Código de respuesta:
-        - 200 si se encuentra el producto.
-        - 404 si el producto no existe.
+Ubicacion: app/Models/Tracking.php
 
-3. **Crear un producto (POST)**
-    - URL: `http://localhost/api/productos`
-    - Método: POST
-    - Cuerpo de la solicitud (JSON):
-      ```json
-      {
-        "type": "Armas cortas",
-        "name": "Nombre del producto",
-        "description": "Descripción del producto",
-        "stock": 10,
-        "weight": 1.5,
-        "image": "https://example.com/imagen.jpg"
-      }
-      ```
-    - Respuesta: Devuelve el producto creado en formato JSON.
-    - Código de respuesta:
-        - 201 si se crea correctamente.
-        - 422 si los datos son inválidos.
+Descripcion: Este modelo representa un seguimiento o monitoreo creado por un usuario. Cada Tracking puede tener varias URLs relacionadas con precios.
 
-4. **Actualizar un producto (PUT)**
-    - URL: `http://localhost/api/productos/{id}`
-    - Método: PUT
-    - Parámetros:
-        - `{id}`: ID del producto a actualizar.
-    - Cuerpo de la solicitud (JSON):
-      ```json
-      {
-        "type": "Armas largas",
-        "name": "Nombre actualizado",
-        "description": "Descripción actualizada",
-        "stock": 20,
-        "weight": 2.0,
-        "image": "https://example.com/imagen-actualizada.jpg"
-      }
-      ```
-    - Respuesta: Devuelve el producto actualizado en formato JSON.
-    - Código de respuesta:
-        - 200 si se actualiza correctamente.
-        - 404 si el producto no existe.
+Relacion:
+public function prices()
+{
+return $this->hasMany(Price::class);
+}
 
-5. **Eliminar un producto (DELETE)**
-    - URL: `http://localhost/api/productos/{id}`
-    - Método: DELETE
-    - Parámetros:
-        - `{id}`: ID del producto a eliminar.
-    - Respuesta: Devuelve un mensaje de éxito.
-    - Código de respuesta:
-        - 200 si se elimina correctamente.
-        - 404 si el producto no existe.
+Relacion uno a muchos con el modelo Price. Cada Tracking puede tener varias entradas de precios.
 
-=======================================
-CONTROLADOR: ProductViewController
-=======================================
+Campos fillables:
+protected $fillable = ['user_id', 'title'];
 
-Este controlador maneja las vistas web de la gestión de productos. A continuación, se explican sus métodos principales:
+2. Modelo Price
 
-1. **Listar todos los productos**
-    - URL: `http://localhost/productos`
-    - Método: GET
-    - Función: Muestra todos los productos en una tabla en la vista.
+Ubicacion: app/Models/Price.php
 
-2. **Formulario para crear un producto**
-    - URL: `http://localhost/productos/crear`
-    - Método: GET
-    - Función: Muestra un formulario para crear un nuevo producto.
+Descripcion: Este modelo almacena los precios obtenidos de las URLs asociadas a un Tracking.
 
-3. **Guardar un producto**
-    - URL: `http://localhost/productos`
-    - Método: POST
-    - Función: Valida y guarda un nuevo producto en la base de datos.
+Relacion:
+public function tracking()
+{
+return $this->belongsTo(Tracking::class);
+}
 
-4. **Formulario para editar un producto**
-    - URL: `http://localhost/productos/{id}/editar`
-    - Método: GET
-    - Función: Muestra un formulario para editar un producto existente.
+Relacion muchos a uno con el modelo Tracking.
 
-5. **Actualizar un producto**
-    - URL: `http://localhost/productos/{id}`
-    - Método: PUT
-    - Función: Valida y actualiza un producto existente en la base de datos.
+Campos fillables:
+protected $fillable = ['tracking_id', 'url', 'price'];
 
-6. **Eliminar un producto**
-    - URL: `http://localhost/productos/{id}`
-    - Método: DELETE
-    - Función: Elimina un producto y su imagen asociada (si existe).
+Controladores
 
-=======================================
-NOTAS ADICIONALES
-=======================================
+1. TrackingController
 
-- **Validación de datos en la API:**
-    - El campo `type` solo acepta valores: "Armas cortas", "Cuchillos", "Armas largas".
-    - La imagen debe ser una URL válida.
-    - Otros campos como `name`, `description`, `stock` y `weight` tienen validaciones específicas para evitar datos inválidos.
+Ubicacion: app/Http/Controllers/TrackingController.php
+
+Responsabilidad: Gestiona las acciones CRUD (Crear, Leer, Actualizar, Eliminar) para los Trackings.
+
+Metodos principales:
+
+index(): Muestra una lista de todos los seguimientos creados por el usuario actual.
+
+create(): Devuelve una vista con el formulario para crear un nuevo Tracking.
+
+store(Request $request): Almacena un nuevo seguimiento en la base de datos.
+
+show(Tracking $tracking): Muestra un seguimiento especifico junto con las URLs de precios relacionadas.
+
+destroy(Tracking $tracking): Elimina un seguimiento.
+
+2. PriceController
+
+Ubicacion: app/Http/Controllers/PriceController.php
+
+Responsabilidad: Gestiona la creacion de precios asociados a un Tracking.
+
+Metodo principal:
+
+store(Request $request, Tracking $tracking, ScraperService $scraper):
+
+Valida la URL proporcionada.
+
+Usa el ScraperService para extraer el precio.
+
+Almacena el precio extraido en la base de datos.
+
+Vistas
+
+1. index.blade.php (Lista de Trackings)
+
+Ubicacion: resources/views/trackings/index.blade.php
+
+Funcion: Muestra una lista de todos los seguimientos del usuario.
+
+Acciones disponibles:
+
+Crear un nuevo Tracking.
+
+Ver detalles de un Tracking.
+
+2. create.blade.php (Formulario de Creacion)
+
+Ubicacion: resources/views/trackings/create.blade.php
+
+Funcion: Muestra el formulario para crear un nuevo Tracking.
+
+Accion: Envia la informacion al metodo store() del TrackingController.
+
+3. show.blade.php (Detalles del Tracking)
+
+Ubicacion: resources/views/trackings/show.blade.php
+
+Funcion: Muestra los detalles de un Tracking especifico junto con la lista de precios obtenidos.
+
+Formulario para agregar una URL: Envia la URL al metodo store() del PriceController.
+
+Servicio de Scraping
+
+ScraperService
+
+Ubicacion: app/Services/ScraperService.php
+
+Responsabilidad: Extraer el precio de la URL proporcionada.
+
+Metodos:
+
+scrapePrice(string $url): Detecta el contenido de la URL y llama al metodo correspondiente segun el tipo de contenido (JSON, XML o HTML).
+
+parseJson(string $body): Extrae el precio si la respuesta es JSON.
+
+parseXml(string $body): Extrae el precio si la respuesta es XML.
+
+parseHtml(string $url): Extrae el precio si la respuesta es HTML mediante Symfony DomCrawler.
+
+Como funciona el scraping de la URL:
+
+Peticion HTTP: Se hace una peticion GET a la URL proporcionada utilizando Http::withHeaders() para evitar bloqueos por parte del servidor.
+$response = Http::withHeaders([
+'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, como Gecko) Chrome/91.0.4472.124 Safari/537.36',
+])->get($url);
+
+Detectar el tipo de contenido: Se verifica si la respuesta es JSON, XML o HTML y se elige el metodo correspondiente para extraer el precio.
+$contentType = $response->header('Content-Type');
+if (str_contains($contentType, 'application/json')) {
+return $this->parseJson($response->body());
+} elseif (str_contains($contentType, 'application/xml') || str_contains($contentType, 'text/xml')) {
+return $this->parseXml($response->body());
+} else {
+return $this->parseHtml($url);
+}
+
+Scraping del HTML:
+Si el contenido es HTML, se utiliza Symfony DomCrawler para seleccionar el elemento que contiene el precio.
+$crawler = new Crawler($html);
+$priceText = $crawler->filter('.product-price, #our_price_display')->first()->text();
+
+// Limpiar y formatear el precio
+$priceText = preg_replace('/[^0-9,.]/', '', $priceText);
+$priceText = str_replace('.', '', $priceText);
+$priceText = str_replace(',', '.', $priceText);
+
+return floatval($priceText);
+
+Ejemplo de flujo del sistema:
+
+El usuario crea un nuevo Tracking usando el formulario en create.blade.php.
+
+Una vez creado, puede agregar URLs de productos en la vista show.blade.php.
+
+El sistema hace scraping de la URL proporcionada, extrae el precio y lo almacena en la base de datos.
+
+Los precios guardados se muestran en la misma vista de Tracking.
